@@ -4,3 +4,5 @@ __pycache__/
 outputs.json
 .DS_Store
 *.pyc
+
+gemini_API_key.py
