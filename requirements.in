@@ -1,0 +1,10 @@
+python-dotenv
+google-genai
+boto3
+botocore
+streamlit
+langgraph
+langchain-core
+matplotlib
+pandas
+numpy<2.4
