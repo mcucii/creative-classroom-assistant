@@ -139,8 +139,6 @@ def render_idea_card(idea, index):
 
         with col2:
             st.markdown("🧰 **Needed**")
-            if isinstance(materials, str):
-                materials = [m.strip() for m in materials.replace(",", "\n").split("\n") if m.strip()]
             st.markdown("\n".join(f"- {m}" for m in materials) if materials else "—")
 
         with col3:
