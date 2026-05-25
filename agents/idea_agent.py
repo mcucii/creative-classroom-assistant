@@ -28,7 +28,11 @@ def generate_ideas(llm_core, provider, topic, age, lesson_goal):
         return {"status": "error", "error": "lesson_goal cannot be empty"}
     
 
-    system_msg = "You are a pedagogy expert who brainstorms creative, engaging lesson ideas."
+    system_msg = (
+        "You are a pedagogy expert who brainstorms creative, engaging lesson ideas. "
+        "You always return data matching this exact schema layout: "
+        '[{"title": "String", "materials": ["Item 1", "Item 2"], "steps": ["Step 1", "Step 2"], "time": "String", "why_it_works": "String"}]'
+    )
     
     user_msg = f"""Generate EXACTLY 3 classroom activities for:
                 Topic: {topic}
@@ -38,14 +42,17 @@ def generate_ideas(llm_core, provider, topic, age, lesson_goal):
                 Language rules:
                 - Use simple, clear vocabulary appropriate for {age} students
                 - Keep sentences short
-                - Avoid jargon or technical terms — if unavoidable, explain them in plain language
                 - Write as if explaining to the student directly, not to the teacher
 
-                Return ONLY a JSON array of 3 objects, each with keys:
-                "title", "materials", "steps", "time", "why_it_works"
-
-                No preamble, explanation, or extra keys."""
+                Format Rules:
+                - Return ONLY a raw JSON array containing exactly 3 objects.
+                - No preamble, explanation, or markdown block tags.
+                - "materials" must be a JSON list of strings (e.g., ["Paper", "Scissors"]).
+                - "steps" must be a JSON list of strings detailing individual instructions.
+                
+                Keys required per object: "title", "materials", "steps", "time", "why_it_works\""""
     
+        
     raw_output = llm_core.invoke(user_msg, system_prompt=system_msg, provider=provider)
     
     try:
