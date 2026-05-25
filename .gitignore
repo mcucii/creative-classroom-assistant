@@ -6,3 +6,11 @@ outputs.json
 *.pyc
 
 gemini_API_key.py
+
+
+**/.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+*.tfvars
+*.tfvars.json
