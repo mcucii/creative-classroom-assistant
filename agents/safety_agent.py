@@ -1,7 +1,7 @@
 # agents/safety_agent.py
 import re
 import json
-from bedrock_client import invoke_model
+from agentcore.llm_providers import LLMCore, LLMProvider
 
 
 SYSTEM_PROMPT = """You are a child safety and educational risk assessor.
@@ -33,9 +33,9 @@ def extract_json(text: str) -> str:
     return text
 
 
-def check_safety(adapted_text: str, target_age: str) -> dict:
-    if not adapted_text or not adapted_text.strip():
-        return {"status": "error", "error": "adapted_text cannot be empty"}
+def check_safety(llm_core: LLMCore, provider: LLMProvider, description: str, target_age: str) -> dict:
+    if not description or not description.strip():
+        return {"status": "error", "error": "description cannot be empty"}
     if not target_age:
         return {"status": "error", "error": "target_age is required"}
 
@@ -65,12 +65,12 @@ def check_safety(adapted_text: str, target_age: str) -> dict:
         }}
 
         Activity:
-        {adapted_text}
+        {description}
 
         Target Age: {target_age}
         """
 
-    raw = invoke_model(prompt, system_prompt=SYSTEM_PROMPT)
+    raw = llm_core.invoke(provider, prompt, system_prompt=SYSTEM_PROMPT)
 
     try:
         cleaned = extract_json(raw)

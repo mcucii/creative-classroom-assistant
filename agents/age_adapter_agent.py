@@ -1,5 +1,5 @@
 # agents/age_adapter_agent.py
-from bedrock_client import invoke_model
+from agentcore.llm_providers import LLMCore, LLMProvider
 
 AGE_PROFILES = {
     "5-7":   "Play-based learning, tactile activities, 10-15 min attention spans. Simple sentences.",
@@ -16,7 +16,7 @@ def get_age_profile(age):
     return "General student population. Adjust complexity based on context.", False
 
 
-def adapt_idea(selected_idea: str, target_age: str, revision_notes=None) -> dict:
+def adapt_idea(llm_core: LLMCore, provider: LLMProvider, selected_idea: str, target_age: str, revision_notes=None) -> dict:
     profile, found = get_age_profile(target_age)
 
     if not found:
@@ -45,7 +45,7 @@ def adapt_idea(selected_idea: str, target_age: str, revision_notes=None) -> dict
         }}
     """
 
-    raw = invoke_model(prompt)
+    raw = llm_core.invoke(provider, prompt)
 
     try:
         import json, re

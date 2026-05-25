@@ -1,6 +1,7 @@
-from bedrock_client import invoke_model
 import re
 import json
+
+from agentcore.llm_providers import LLMCore, LLMProvider
 
 
 def extract_json(text: str) -> str:
@@ -18,23 +19,24 @@ def extract_json(text: str) -> str:
     return text 
 
 
-def generate_ideas(topic, age_group, lesson_goal):
+def generate_ideas(llm_core, provider, topic, age, lesson_goal):
     if not topic or not topic.strip():
         return {"status": "error", "error": "topic cannot be empty"}
-    if not age_group:
-        return {"status": "error", "error": "age_group is required"}
+    if not age:
+        return {"status": "error", "error": "age is required"}
     if not lesson_goal or not lesson_goal.strip():
         return {"status": "error", "error": "lesson_goal cannot be empty"}
     
 
     system_msg = "You are a pedagogy expert who brainstorms creative, engaging lesson ideas."
+    
     user_msg = f"""Generate EXACTLY 3 classroom activities for:
                 Topic: {topic}
-                Age: {age_group}
+                Age: {age}
                 Goal: {lesson_goal}
 
                 Language rules:
-                - Use simple, clear vocabulary appropriate for {age_group} students
+                - Use simple, clear vocabulary appropriate for {age} students
                 - Keep sentences short
                 - Avoid jargon or technical terms — if unavoidable, explain them in plain language
                 - Write as if explaining to the student directly, not to the teacher
@@ -44,7 +46,7 @@ def generate_ideas(topic, age_group, lesson_goal):
 
                 No preamble, explanation, or extra keys."""
     
-    raw_output = invoke_model(user_msg, system_prompt=system_msg)
+    raw_output = llm_core.invoke(user_msg, system_prompt=system_msg, provider=provider)
     
     try:
         cleaned = extract_json(raw_output)
