@@ -70,7 +70,7 @@ def check_safety(llm_core: LLMCore, provider: LLMProvider, description: str, tar
         Target Age: {target_age}
         """
 
-    raw = llm_core.invoke(provider, prompt, system_prompt=SYSTEM_PROMPT)
+    raw = llm_core.invoke(prompt, provider=provider, system_prompt=SYSTEM_PROMPT)
 
     try:
         cleaned = extract_json(raw)

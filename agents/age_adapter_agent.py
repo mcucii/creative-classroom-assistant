@@ -45,7 +45,7 @@ def adapt_idea(llm_core: LLMCore, provider: LLMProvider, selected_idea: str, tar
         }}
     """
 
-    raw = llm_core.invoke(provider, prompt)
+    raw = llm_core.invoke(prompt, provider=provider)
 
     try:
         import json, re
