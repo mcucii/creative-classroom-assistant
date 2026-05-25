@@ -199,33 +199,23 @@ with main_col:
 
             # ── Run Refinement ─────────────────────────────────────────────
             if st.session_state.refine_triggered:
-
                 st.session_state.refine_triggered = False
-
                 st.subheader(f"🔍 Refining: *{selected.get('title')}*")
 
                 with st.spinner("Adapting and checking safety..."):
-
                     result = orchestrator.run_refine(selected, st.session_state.age)
-
                     st.session_state.refine_result = result
                     refine_result = result
 
             # ── Show Results ───────────────────────────────────────────────
             if refine_result:
-
                 status = refine_result.get("status")
-
                 if status == "ok":
-
                     st.success("✨ Refinement Complete!")
-
                     final_plan = refine_result.get("final_plan", {})
 
                     with st.container(border=True):
-
                         st.markdown(f"### 🎯 {final_plan.get('title', selected.get('title'))}")
-
                         st.markdown(
                             final_plan.get(
                                 "adapted_description",
@@ -293,18 +283,15 @@ with main_col:
                             st.write(safety_data)
 
                 elif status == "rejected":
-
                     st.error("⛔ This activity was flagged as unsafe and could not be resolved.")
                     st.write(refine_result.get("assessment"))
 
                 elif status == "unresolved":
-
                     st.warning("⚠️ Could not produce a safe version after multiple attempts.")
                     st.write(refine_result.get("last_safety"))
 
                 else:
-
-                    st.error(f"Pipeline error at stage: {refine_result.get('stage')}")
+                    st.error(f"Pipeline error at stage: {refine_result}")
                     st.write(refine_result.get("detail"))
 
 # ── History ───────────────────────────────────────────────────────────────────
