@@ -13,11 +13,8 @@ from enum import Enum
 
 load_dotenv()
 
-
 class LLMProvider(str, Enum):
     CLAUDE = "claude"
-    GEMINI = "gemini"
-
 
 class LLMCore:
     """Core LLM invocation logic - provider-agnostic interface"""
@@ -31,26 +28,30 @@ class LLMCore:
             config=my_config
         )
         
-        # Gemini setup
-        gemini_key = os.getenv('GEMINI_API_KEY', 'AIzaSyCD2x18mFsf9ynZwLR2RJdmmET7nUtrgb0')
-        self.client_gemini = genai.Client(api_key=gemini_key)
-        
-        self.default_system_prompt = "You are a creative classroom assistant."
-    
     def invoke_claude(
         self, 
-        prompt: str, 
+        user_prompt: str, 
         system_prompt: Optional[str] = None,
         max_tokens: int = 1000,
         model_id: str = "global.anthropic.claude-sonnet-4-5-20250929-v1:0"
     ) -> str:
         """Invoke Claude via AWS Bedrock"""
-        body = json.dumps({
+
+        messages = [
+            {
+                "role": "user", 
+                "content": [{"type": "text", "text": user_prompt}]
+            }
+        ]
+
+        body_obj = {
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": max_tokens,
-            "system": system_prompt or self.default_system_prompt,
-            "messages": [{"role": "user", "content": prompt}]
-        })
+            "system": [{"type": "text", "text": system_prompt}] if system_prompt else [],
+            "messages": messages
+        }
+        
+        body = json.dumps(body_obj)
         
         response = self.bedrock.invoke_model(
             body=body, 
@@ -60,44 +61,20 @@ class LLMCore:
         response_body = json.loads(response.get("body").read())
         return response_body["content"][0]["text"]
     
-    def invoke_gemini(
-        self, 
-        prompt: str, 
-        system_prompt: Optional[str] = None,
-        model: str = "gemini-2.0-flash"
-    ) -> str:
-        """Invoke Gemini via Google GenAI"""
-        response = self.client_gemini.models.generate_content(
-            model=model,
-            contents=prompt,
-            config=genai.types.GenerateContentConfig(
-                system_instruction=system_prompt or self.default_system_prompt
-            )
-        )
-        return response.text
     
     def invoke(
-        self, 
+        self,
         prompt: str,
         provider: LLMProvider = LLMProvider.CLAUDE,
         system_prompt: Optional[str] = None,
         **kwargs
     ) -> str:
         """
-        Unified invoke method - route to the appropriate provider
-        
-        Args:
-            prompt: The user prompt
-            provider: Which LLM to use
-            system_prompt: Optional system prompt override
-            **kwargs: Provider-specific parameters
-        
-        Returns:
-            LLM response text
+        Unified invoke interface. `prompt` is the first positional argument; `provider`
+        may be provided as a keyword (defaults to Claude). For Claude we forward to
+        `invoke_claude` which expects `user_prompt` and an optional `system_prompt`.
         """
         if provider == LLMProvider.CLAUDE:
-            return self.invoke_claude(prompt, system_prompt, **kwargs)
-        elif provider == LLMProvider.GEMINI:
-            return self.invoke_gemini(prompt, system_prompt, **kwargs)
+            return self.invoke_claude(user_prompt=prompt, system_prompt=system_prompt, **kwargs)
         else:
             raise ValueError(f"Unknown provider: {provider}")

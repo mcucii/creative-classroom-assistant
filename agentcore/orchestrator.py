@@ -140,8 +140,20 @@ class ActivityOrchestrator:
 
         result = self.refinement_graph.invoke(initial_state)
 
+
+        final_status = result.get("status")
+        assessment = result.get("safety_assessment") or {}
+        if final_status == "error":
+            status_mapping = "error"
+        elif assessment.get("severity") == "high":
+            status_mapping = "rejected"
+        elif result.get("attempt", 0) >= self.MAX_RETRIES and not assessment.get("safe_to_use"):
+            status_mapping = "unresolved"
+        else:
+            status_mapping = "ok"
+
         return {
-            "status": result.get("status", "ok"),
+            "status": status_mapping,
             "final_plan": result.get("adapted_plan"),
             "safety": result.get("safety_assessment"),
             "attempts": result.get("attempt"),
