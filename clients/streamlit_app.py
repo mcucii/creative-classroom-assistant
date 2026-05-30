@@ -53,7 +53,7 @@ div.stButton > button[kind="secondary"]:hover {
 </style>
 """, unsafe_allow_html=True)
 
-# st.title("Attention is all you need! 🚀")
+st.title("Creative Classroom 🚀")
 
 # ── Session State ─────────────────────────────────────────────────────────────
 defaults = {
