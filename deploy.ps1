@@ -36,8 +36,10 @@ while ($IP -eq "" -or $IP -eq "None") {
     $IP = (aws ec2 describe-network-interfaces --network-interface-ids $ENI_ID --region eu-central-1 --query "NetworkInterfaces[0].Association.PublicIp" --output text)
     if ($IP -eq "" -or $IP -eq "None") {
         Write-Host "Waiting for IP..." -ForegroundColor Cyan
-        Start-Sleep -Seconds 5
+        Start-Sleep -Seconds 40
     }
+
+    Write-Host "IP: $IP" -ForegroundColor Cyan  
 }
 
 Write-Host "DONE - Live at: http://$IP:8501" -ForegroundColor Green
