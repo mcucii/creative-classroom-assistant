@@ -277,3 +277,7 @@ xxhash==3.7.0
     #   langsmith
 zstandard==0.25.0
     # via langsmith
+
+
+msgpack==1.0.5
+    # via langchain-core
