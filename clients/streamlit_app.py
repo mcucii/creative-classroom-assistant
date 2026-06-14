@@ -538,9 +538,10 @@ with main_col:
 
         if not selected:
             st.markdown("""
-            <div style="margin-top: 1rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem;">
-                <h2 style="margin:0; font-size: 1.8rem; color: #342E37; font-weight: 800; letter-spacing: -0.5px;">Choose an Activity</h2>
-                <div style="height: 3px; flex-grow: 1; background: linear-gradient(to right, rgba(231,104,168,0.4), transparent); border-radius: 10px;"></div>
+            <div style="margin-bottom: 1.5rem;">
+                <div style="background: rgba(255,255,255,0.8); backdrop-filter: blur(8px); padding: 0.5rem 1.5rem; border-radius: 50px; border: 1.5px solid rgba(255,255,255,0.6); display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <h2 style="margin:0; font-size: 1.3rem; color: #342E37; font-family: 'Fraunces', serif;">Choose an Activity ↓</h2>
+                </div>
             </div>
             """, unsafe_allow_html=True)
             for i, idea in enumerate(ideas):
@@ -623,22 +624,29 @@ with main_col:
                             st.markdown("<br>", unsafe_allow_html=True)
                             for key in ["risks", "suggestions"]:
                                 value = safety_data.get(key)
-                                st.markdown(f"#### {key.title()}")
+                                
+                                html = f"""<div style="background:rgba(255,255,255,0.92);backdrop-filter:blur(10px);border-radius:16px;padding:1.5rem;margin-bottom:1rem;border:1.5px solid rgba(255,255,255,0.7);box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+    <h4 style="margin:0 0 0.8rem 0;color:#342E37;font-weight:800;font-family:'Nunito',sans-serif;">{key.title()}</h4>"""
+                                
                                 if not value or value == "none":
-                                    st.markdown(f'<p style="color:#aaa;font-style:italic;">No {key} identified.</p>', unsafe_allow_html=True)
-                                    continue
-                                if isinstance(value, list):
+                                    html += f'<p style="color:#888;font-style:italic;margin:0;">No {key} identified.</p>'
+                                elif isinstance(value, list):
+                                    html += '<ul style="margin:0;padding-left:1.2rem;color:#342E37;line-height:1.6;font-size:0.95rem;">'
                                     for item in value:
                                         if isinstance(item, dict):
                                             category = item.get("category") or item.get("addresses_risk")
                                             content  = item.get("description") or item.get("change")
                                             if content:
                                                 label = category.replace("_"," ").title() if category and category.lower() != "general" else None
-                                                st.markdown(f"**{label}**: {content}" if label else f"- {content}")
+                                                html += f'<li style="margin-bottom:0.5rem;"><strong>{label}:</strong> {content}</li>' if label else f'<li style="margin-bottom:0.5rem;">{content}</li>'
                                         else:
-                                            st.markdown(f"- {item}")
+                                            html += f'<li style="margin-bottom:0.5rem;">{item}</li>'
+                                    html += '</ul>'
                                 else:
-                                    st.write(value)
+                                    html += f'<p style="margin:0;color:#342E37;line-height:1.6;">{value}</p>'
+                                
+                                html += "</div>"
+                                st.markdown(html, unsafe_allow_html=True)
                         else:
                             st.info("No structured safety data available.")
                             st.write(safety_data)
