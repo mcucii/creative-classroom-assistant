@@ -2,6 +2,8 @@
 
 A classroom activity generation toolkit that combines a FastAPI backend, Streamlit frontend, AWS-deployed AgentCore orchestration, and LLM-powered workflows to create, adapt, and safety-check lesson ideas.
 
+Check it out: http://18.185.220.177:8501/
+
 ## Overview
 
 This project helps teachers and curriculum designers generate creative classroom activities for different age groups using large language models. It includes:
