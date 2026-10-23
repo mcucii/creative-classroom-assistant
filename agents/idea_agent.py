@@ -1,7 +1,7 @@
 import re
 import json
 
-from agentcore.llm_providers import LLMCore, LLMProvider
+from core.llm_providers import LLMCore, LLMProvider
 
 
 def extract_json(text: str) -> str:
@@ -19,14 +19,13 @@ def extract_json(text: str) -> str:
     return text 
 
 
-def generate_ideas(llm_core, provider, topic, age, lesson_goal):
+def generate_ideas(llm_core, topic, age, lesson_goal):
     if not topic or not topic.strip():
         return {"status": "error", "error": "topic cannot be empty"}
     if not age:
         return {"status": "error", "error": "age is required"}
     if not lesson_goal or not lesson_goal.strip():
         return {"status": "error", "error": "lesson_goal cannot be empty"}
-    
 
     system_msg = (
         "You are a pedagogy expert who brainstorms creative, engaging lesson ideas. "
@@ -53,7 +52,7 @@ def generate_ideas(llm_core, provider, topic, age, lesson_goal):
                 Keys required per object: "title", "materials", "steps", "time", "why_it_works\""""
     
         
-    raw_output = llm_core.invoke(user_msg, system_prompt=system_msg, provider=provider)
+    raw_output = llm_core.invoke(user_msg, system_prompt=system_msg)
     
     try:
         cleaned = extract_json(raw_output)
@@ -62,11 +61,11 @@ def generate_ideas(llm_core, provider, topic, age, lesson_goal):
             return {"status": "parse_error", "error": "Expected a JSON array", "raw": raw_output}
         
         if len(ideas) != 3:
-            print(f"⚠️ Expected 3 ideas, got {len(ideas)}")
+            print(f"Expected 3 ideas, got {len(ideas)}")
         
         return ideas
     
     except Exception as e:
-        print(f"❌ JSON parse failed: {e}")
-        print(f"❌ RAW OUTPUT: {raw_output}")
+        print(f"JSON parse failed: {e}")
+        print(f"RAW OUTPUT: {raw_output}")
         return []

@@ -1,5 +1,5 @@
 # agents/age_adapter_agent.py
-from agentcore.llm_providers import LLMCore, LLMProvider
+from core.llm_providers import LLMCore, LLMProvider
 
 AGE_PROFILES = {
     "5-7":   "Play-based learning, tactile activities, 10-15 min attention spans. Simple sentences.",

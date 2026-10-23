@@ -1,7 +1,7 @@
 # agents/safety_agent.py
 import re
 import json
-from agentcore.llm_providers import LLMCore, LLMProvider
+from core.llm_providers import LLMCore, LLMProvider
 
 
 SYSTEM_PROMPT = """You are a child safety and educational risk assessor.
@@ -75,7 +75,6 @@ def check_safety(llm_core: LLMCore, provider: LLMProvider, description: str, tar
     try:
         cleaned = extract_json(raw)
         result = json.loads(cleaned)
-
         required = {"status", "severity", "risks", "suggestions", "safe_to_use"}
         missing = required - result.keys()
         if missing:

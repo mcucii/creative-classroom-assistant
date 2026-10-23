@@ -4,15 +4,14 @@ from pydantic import BaseModel, Field
 from typing import Optional, Literal, Dict, Any, List
 import uvicorn
 import logging
-import json
 
-from agentcore.llm_providers import LLMCore, LLMProvider
-from agentcore.orchestrator import ActivityOrchestrator
+from core.llm_providers import LLMCore, LLMProvider, DEFAULT_PROVIDER
+from core.orchestrator import ActivityOrchestrator
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="AgentCore API", version="1.0.0")
+app = FastAPI(title="Classroom Assistant API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,55 +22,7 @@ app.add_middleware(
 )
 
 llm_core = LLMCore()
-orchestrator = ActivityOrchestrator(llm_core, provider=LLMProvider.CLAUDE)
-
-
-# ── AgentCore required endpoints ──────────────────────────────────────────────
-
-@app.get("/ping")
-async def ping():
-    return {"status": "ok"}
-
-
-@app.post("/invocations")
-async def invocations(request: Request):
-    raw = await request.body()
-    logger.info(f"Raw bytes: {raw.hex()}")
-    logger.info(f"Raw repr: {repr(raw[:100])}")
-    
-    # try msgpack first
-    try:
-        import msgpack
-        body = msgpack.unpackb(raw, raw=False)
-        logger.info(f"Decoded as msgpack: {body}")
-    except Exception as e1:
-        logger.info(f"msgpack failed: {e1}")
-        try:
-            body = json.loads(raw.decode("latin-1"))
-            logger.info(f"Decoded as latin-1: {body}")
-        except Exception as e2:
-            logger.info(f"latin-1 failed: {e2}")
-            return {"error": "cannot decode payload", "hex": raw.hex()}
-
-    action = body.get("action")
-    logger.info(f"action={action}")
-
-    if action == "generate":
-        ideas = orchestrator.run_generate(
-            topic=body["topic"],
-            age=body["age_group"],
-            goal=body["goal"]
-        )
-        return {"ideas": ideas}
-
-    elif action == "refine":
-        result = orchestrator.run_refine(
-            selected_idea=body["activity"],
-            age=body["age_group"]
-        )
-        return result
-
-    return {"error": f"unknown action: {action}"}
+orchestrator = ActivityOrchestrator(llm_core)
 
 
 # ── Health check ──────────────────────────────────────────────────────────────
@@ -85,7 +36,7 @@ async def health_check():
 
 class InvokeRequest(BaseModel):
     prompt: str = Field(..., description="The prompt to send to the LLM")
-    provider: Literal["claude"] = Field(default="claude")
+    provider: LLMProvider = DEFAULT_PROVIDER
     system_prompt: Optional[str] = Field(default=None)
     max_tokens: Optional[int] = Field(default=1000, ge=1, le=4096)
 
@@ -98,7 +49,6 @@ class GenerateIdeasRequest(BaseModel):
     topic: str
     age_group: str
     goal: str
-    provider: Literal["claude"] = Field(default="claude")
     num_ideas: int = Field(default=3, ge=1, le=5)
 
 class GenerateIdeasResponse(BaseModel):
@@ -109,7 +59,6 @@ class GenerateIdeasResponse(BaseModel):
 class RefineActivityRequest(BaseModel):
     activity: Dict[str, Any]
     age_group: str
-    provider: Literal["claude"] = Field(default="claude")
 
 class RefineActivityResponse(BaseModel):
     status: str

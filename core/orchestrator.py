@@ -5,7 +5,7 @@ from agents.idea_agent import generate_ideas
 from agents.age_adapter_agent import adapt_idea
 from agents.safety_agent import check_safety
 
-from agentcore.llm_providers import LLMCore, LLMProvider
+from core.llm_providers import LLMCore, LLMProvider, DEFAULT_PROVIDER
 
 
 class RefinementState(TypedDict):
@@ -24,7 +24,7 @@ class ActivityOrchestrator:
     def __init__(
         self,
         llm_core: LLMCore,
-        provider: LLMProvider
+        provider: LLMProvider = DEFAULT_PROVIDER
     ):
         self.llm_core = llm_core
         self.provider = provider
@@ -120,7 +120,6 @@ class ActivityOrchestrator:
     def run_generate(self, topic: str, age: str, goal: str):
         return generate_ideas(
             llm_core=self.llm_core,
-            provider=self.provider,
             topic=topic,
             age=age,
             lesson_goal=goal
@@ -139,7 +138,6 @@ class ActivityOrchestrator:
         }
 
         result = self.refinement_graph.invoke(initial_state)
-
 
         final_status = result.get("status")
         assessment = result.get("safety_assessment") or {}
