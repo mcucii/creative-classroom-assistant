@@ -1,5 +1,4 @@
-import boto3
-import json
+import requests
 import streamlit as st
 import base64
 import os
@@ -9,9 +8,9 @@ st.set_page_config(layout="wide", page_title="Creative Classroom")
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 IMAGE_PATH = os.path.join(SCRIPT_DIR, "..", "images", "background2.png")
-AGENT_RUNTIME_ARN = "arn:aws:bedrock-agentcore:eu-central-1:963649480732:runtime/classroom_agent-XAQfz84DXl"
+API_URL = os.getenv("API_URL", "http://localhost:8000")
+TIMEOUT = 180 
 
-client = boto3.client("bedrock-agentcore", region_name="eu-central-1")
 
 # ── Background ────────────────────────────────────────────────────────────────
 def set_background(image_file):
@@ -31,43 +30,35 @@ def set_background(image_file):
 
 set_background(IMAGE_PATH)
 
-# ── Agent calls ───────────────────────────────────────────────────────────────
-def _decode_bedrock_response(response):
-    if "payload" in response:
-        body = response["payload"].read()
-    elif "response" in response:
-        body = response["response"].read()
-    else:
-        raise RuntimeError(f"Unexpected Bedrock response shape: {list(response.keys())}")
-    return json.loads(body)
 
+# ── API calls ───────────────────────────────────────────────────────────────
+def _post(path, payload):
+    response = requests.post(f"{API_URL}{path}", json=payload, timeout=TIMEOUT)
+    response.raise_for_status()
+    return response.json()
 
 def generate_ideas(topic, age, goal):
-    response = client.invoke_agent_runtime(
-        agentRuntimeArn=AGENT_RUNTIME_ARN,
-        qualifier="default",
-        payload=json.dumps({
-            "action": "generate",
+    try:
+        result = _post("/activities/generate", {
             "topic": topic,
             "age_group": age,
             "goal": goal
-        }).encode()
-    )
-    result = _decode_bedrock_response(response)
-    return result.get("ideas", [])
+        })
 
-
+        return result.get("ideas", [])
+    except requests.RequestException as e:
+        st.error(f"Could not generate ideas: {e}")
+        return [] 
+    
 def refine_activity(selected_idea, age):
-    response = client.invoke_agent_runtime(
-        agentRuntimeArn=AGENT_RUNTIME_ARN,
-        qualifier="default",
-        payload=json.dumps({
-            "action": "refine",
+    try:
+        return _post("/activities/refine", {
             "activity": selected_idea,
             "age_group": age
-        }).encode()
-    )
-    return _decode_bedrock_response(response)
+        })
+    except requests.RequestException as e:
+        return {"status": "error", "error": str(e)}
+
 
 # ── CSS ───────────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -495,15 +486,16 @@ with main_col:
             """, unsafe_allow_html=True)
             new_ideas = generate_ideas(topic, age, goal)
             loader.empty()
-            st.session_state.ideas = new_ideas
-            st.session_state.age = age
-            st.session_state.selected = None
-            st.session_state.refine_triggered = False
-            st.session_state.refine_result = None
-            st.session_state.risks_acknowledged = False
-            for idea in new_ideas:
-                st.session_state.history[idea.get("title", "Untitled")] = idea
-            st.rerun()
+            if new_ideas:
+                st.session_state.ideas = new_ideas
+                st.session_state.age = age
+                st.session_state.selected = None
+                st.session_state.refine_triggered = False
+                st.session_state.refine_result = None
+                st.session_state.risks_acknowledged = False
+                for idea in new_ideas:
+                    st.session_state.history[idea.get("title", "Untitled")] = idea
+                st.rerun()
 
     if not st.session_state.ideas:
         st.markdown("""
@@ -669,15 +661,15 @@ with main_col:
 
                 elif status == "rejected":
                     st.error("This activity was flagged as unsafe and could not be resolved.")
-                    st.write(refine_result.get("assessment"))
+                    st.write(refine_result.get("safety"))
                 elif status == "unresolved":
                     st.warning("Could not produce a safe version after multiple attempts.")
-                    st.write(refine_result.get("last_safety"))
+                    st.write(refine_result.get("safety"))
+
                 else:
                     st.error(f"Pipeline error: {refine_result}")
 
 
-# ── History column ────────────────────────────────────────────────────────────
 # ── History column ────────────────────────────────────────────────────────────
 with history_col:
     history = st.session_state.history
