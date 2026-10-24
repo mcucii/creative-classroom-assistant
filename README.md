@@ -2,7 +2,7 @@
 
 A classroom activity generation toolkit that combines a FastAPI backend, Streamlit frontend, AWS-deployed AgentCore orchestration, and LLM-powered workflows to create, adapt, and safety-check lesson ideas.
 
-Check it out: http://classroom-assistant.duckdns.org:8501/
+Check it out: [http://classroom-assistant.duckdns.org:8501/](https://creative-classroom-assistant.streamlit.app/)
 
 ## Overview
 
